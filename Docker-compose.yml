@@ -2,10 +2,10 @@ services:
   web:
     image: python:3.13-alpine
     build: 
-      context: . #"https://github.com/miuguelt/HolaDocker.git"
+      context: . 
       dockerfile: Dockerfile
     ports:
-      - 5000:5000
+      - 5073:5000
     volumes:
       - .:/app
     environment:
