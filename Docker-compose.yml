@@ -1,6 +1,5 @@
 services:
   web:
-    image: python:3.13-alpine
     build: 
       context: . 
       dockerfile: Dockerfile
@@ -8,5 +7,10 @@ services:
       - 5073:5000
     volumes:
       - .:/app
+      - db_volume:/app  # Persistencia específica para el .db (opcional, pero recomendado)
     environment:
-      - APP_NAME=$APP_NAME
+      - APP_NAME=${APP_NAME}  # Mantén si lo necesitas
+      - DATABASE_URL=sqlite:////app/fashion_boutique.db  # Fuerza SQLite explícitamente (opcional, si quieres sobrescribir)
+
+volumes:
+  db_volume:  # Volumen para persistir el .db
