@@ -9,7 +9,7 @@ COPY requirements.txt .
 # Instalar dependencias del sistema para mysqlclient (temporales para no inflar la imagen)
 RUN apk update \
     && apk add --no-cache mariadb-connector-c-dev \
-    && apk add --virtual .build-deps gcc musl-dev mariadb-dev pkg-config \
+    && apk add --virtual .build-deps gcc musl-dev mariadb-dev pkgconf \
     && pip install --default-timeout=100 --no-cache-dir -r requirements.txt \
     && apk del .build-deps
 
