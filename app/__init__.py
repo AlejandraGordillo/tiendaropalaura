@@ -6,6 +6,9 @@ from flask_migrate import Migrate
 # ✅ ELIMINADA la importación circular: from app.models import Product
 import os
 
+# Importar la configuración
+from config import Config
+
 # Inicializar extensiones PRIMERO
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -15,19 +18,8 @@ migrate = Migrate()
 def create_app():
     app = Flask(__name__)
     
-    # 🔒 CONFIGURACIÓN BÁSICA
-    app.config['SECRET_KEY'] = 'tu-clave-secreta-muy-segura-aqui'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////app/fashion_boutique.db'  # ✅ Cambiado a SQLite (path absoluto para Docker)
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
-    # 📧 CONFIGURACIÓN DE GMAIL
-    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USE_SSL'] = False
-    app.config['MAIL_USERNAME'] = 'davidsaavedrapinzon13@gmail.com'
-    app.config['MAIL_PASSWORD'] = 'unxz cjlb vuwe ofzm'
-    app.config['MAIL_DEFAULT_SENDER'] = 'davidsaavedrapinzon13@gmail.com'
+    # 🔒 Cargar configuración desde la clase Config (que usa variables de entorno)
+    app.config.from_object(Config)
     
     # Inicializar extensiones con la app
     db.init_app(app)
