@@ -17,7 +17,7 @@ def create_app():
     
     # 🔒 CONFIGURACIÓN BÁSICA
     app.config['SECRET_KEY'] = 'tu-clave-secreta-muy-segura-aqui'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/fashion_boutique'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////app/fashion_boutique.db'  # ✅ Cambiado a SQLite (path absoluto para Docker)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # 📧 CONFIGURACIÓN DE GMAIL
@@ -49,6 +49,9 @@ def create_app():
     # ✅ CORREGIDO: Crear tablas pero NO crear admin todavía (por el problema de created_at)
     with app.app_context():
         db.create_all()
+        
+        # Print para depurar la URI de DB cargada
+        print(f"URI de DB cargada: {app.config['SQLALCHEMY_DATABASE_URI']}")
         
         # ✅ SOLUCIÓN: Verificar si la columna created_at existe antes de crear el admin
         try:
