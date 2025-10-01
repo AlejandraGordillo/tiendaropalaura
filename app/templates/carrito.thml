@@ -1,0 +1,82 @@
+// Mostrar carrito con botón Comprar
+function showCart() {
+    const container = document.getElementById('cart-container');
+    container.innerHTML = '';
+
+    const productIds = Object.keys(cart);
+    if (productIds.length === 0) {
+        container.innerHTML = '<p>El carrito está vacío.</p>';
+        return;
+    }
+
+    let total = 0;
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    `;
+
+    const tbody = table.querySelector('tbody');
+
+    productIds.forEach(id => {
+        const product = products.find(p => p.id === parseInt(id));
+        const qty = cart[id];
+        const subtotal = product.price * qty;
+        total += subtotal;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${product.name}</td>
+            <td>$${product.price.toFixed(2)}</td>
+            <td>
+                <input type="number" min="1" max="${product.stock}" value="${qty}" onchange="updateQuantity(${product.id}, this.value)" style="width: 50px;">
+            </td>
+            <td>$${subtotal.toFixed(2)}</td>
+            <td><button onclick="removeFromCart(${product.id})">Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const trTotal = document.createElement('tr');
+    trTotal.innerHTML = `
+        <td colspan="3"><strong>Total</strong></td>
+        <td colspan="2"><strong>$${total.toFixed(2)}</strong></td>
+    `;
+    tbody.appendChild(trTotal);
+
+    container.appendChild(table);
+
+    // Aquí agregamos el botón Comprar
+    const buyBtn = document.createElement('button');
+    buyBtn.textContent = 'Comprar';
+    buyBtn.style.marginTop = '15px';
+    buyBtn.style.padding = '10px 20px';
+    buyBtn.onclick = checkout;
+
+    container.appendChild(buyBtn);
+}
+
+// Función para simular la compra
+function checkout() {
+    if (Object.keys(cart).length === 0) {
+        alert('El carrito está vacío.');
+        return;
+    }
+
+    alert('¡Gracias por tu compra!');
+
+    // Vaciar carrito
+    cart = {};
+    saveCart();
+    showCart();
+}
+
