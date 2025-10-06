@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, render_template
 from flask_login import login_required
 from app import db
-from app.models import Product
+from app.models1 import Product
 from decimal import Decimal
 
 products_bp = Blueprint('products', __name__)

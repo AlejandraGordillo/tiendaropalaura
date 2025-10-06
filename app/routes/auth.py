@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db, mail
-from app.models import User  # ← Importar User (singular)
+from app.models1 import User  # ← Importar User (singular)
 from flask_mail import Message
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging

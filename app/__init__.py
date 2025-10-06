@@ -32,7 +32,7 @@ def create_app():
     login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
     
     # Importar y configurar user_loader DENTRO de create_app
-    from app.models import User
+    from app.models1 import User
     
     @login_manager.user_loader
     def load_user(user_id):
@@ -66,7 +66,7 @@ def create_app():
     @app.route('/')
     def index():
         # ✅ IMPORTAR Product DENTRO de la función para evitar circular import
-        from app.models import Product
+        from app.models1 import Product
         
         page = request.args.get('page', 1, type=int)
         per_page = 30  # ✅ 30 productos por página (no 6)
@@ -102,17 +102,19 @@ def create_app():
                              has_next=pagination.has_next,
                              has_prev=pagination.has_prev)
     
-    # ✅ CORREGIDO: Registrar blueprints
+    # Registrar blueprints
     from app.routes.auth import bp as auth_bp
     from app.routes.users_route import bp as users_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.products import products_bp
     from app.routes.cart import cart_bp
+    from app.routes.pedidos import pedidos_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(products_bp)
+    app.register_blueprint(pedidos_bp)
     app.register_blueprint(cart_bp)
     
     return app

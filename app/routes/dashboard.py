@@ -16,7 +16,7 @@ def dashboard():
 def dashboard_stats():
     try:
         # Importar modelos aquí para evitar problemas de importación circular
-        from app.models import Product, Order, OrderDetail, User
+        from app.models1 import Product, Order, OrderDetail, User
         
         # Obtener estadísticas para el dashboard
         total_products = Product.query.count()
@@ -77,7 +77,7 @@ def dashboard_stats():
 @login_required
 def get_products():
     try:
-        from app.models import Product
+        from app.models1 import Product
         # OBTENER TODOS LOS PRODUCTOS SIN LÍMITE
         products = Product.query.all()
         return jsonify([{
@@ -98,7 +98,7 @@ def get_products():
 @login_required
 def add_product():
     try:
-        from app.models import Product
+        from app.models1 import Product
         data = request.get_json()
         new_product = Product(
             nameProduct=data['name'],
@@ -120,7 +120,7 @@ def add_product():
 @login_required
 def update_product(product_id):
     try:
-        from app.models import Product
+        from app.models1 import Product
         product = Product.query.get_or_404(product_id)
         data = request.get_json()
         
@@ -144,7 +144,7 @@ def update_product(product_id):
 @login_required
 def delete_product(product_id):
     try:
-        from app.models import Product
+        from app.models1 import Product
         product = Product.query.get_or_404(product_id)
         db.session.delete(product)
         db.session.commit()
@@ -158,7 +158,7 @@ def delete_product(product_id):
 @login_required
 def get_users():
     try:
-        from app.models import User
+        from app.models1 import User
         users = User.query.all()
         return jsonify([{
             'id': user.idUser,
@@ -176,7 +176,7 @@ def get_users():
 @login_required
 def delete_user(user_id):
     try:
-        from app.models import User
+        from app.models1 import User
         user = User.query.get_or_404(user_id)
         
         # No permitir eliminar el propio usuario
@@ -195,7 +195,7 @@ def delete_user(user_id):
 @login_required
 def get_categories():
     try:
-        from app.models import Category
+        from app.models1 import Category
         categories = Category.query.all()
         return jsonify([{
             'id': category.idCategory,
@@ -217,7 +217,7 @@ def get_categories():
 @login_required
 def add_category():
     try:
-        from app.models import Category
+        from app.models1 import Category
         data = request.get_json()
         
         # Generar ID automático si no se proporciona
@@ -241,7 +241,7 @@ def add_category():
 @login_required
 def get_orders():
     try:
-        from app.models import Order, User
+        from app.models1 import Order, User
         orders = Order.query.all()
         return jsonify([{
             'id': order.idOrder,

@@ -1,0 +1,30 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Gestión de Pedidos</h2>
+    <p>Lista de pedidos realizados por los usuarios.</p>
+
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.id }}</td>
+                <td>{{ pedido.usuario.nameUser }}</td>
+                <td>{{ pedido.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>${{ pedido.total }}</td>
+                <td>{{ pedido.estado }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
