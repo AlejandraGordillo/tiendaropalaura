@@ -1,15 +1,14 @@
 from flask import Blueprint, jsonify, request
 from flask_login import login_required
 from app import db
-from app.models1 import Category  # Asumo que tienes un modelo Category
-
+from app.models.categoria import Categoria
 categories_bp = Blueprint('categories', __name__)
 
 @categories_bp.route('/api/categories', methods=['GET'])
 def get_categories():
     """Obtener todas las categorías"""
     try:
-        categories = Category.query.order_by(Category.name).all()
+        categories = Categoria.query.order_by(Categoria.name).all()
         return jsonify([{
             'id': category.id,
             'name': category.name
@@ -32,11 +31,11 @@ def add_category():
             return jsonify({'success': False, 'message': 'El nombre de la categoría es obligatorio'}), 400
 
         # Verificar si ya existe la categoría
-        existing = Category.query.filter_by(name=name).first()
+        existing = Categoria.query.filter_by(name=name).first()
         if existing:
             return jsonify({'success': False, 'message': 'La categoría ya existe'}), 400
 
-        new_category = Category(name=name)
+        new_category = Categoria(name=name)
         db.session.add(new_category)
         db.session.commit()
 
@@ -58,7 +57,7 @@ def add_category():
 def update_category(category_id):
     """Actualizar categoría existente"""
     try:
-        category = Category.query.get_or_404(category_id)
+        category = Categoria.query.get_or_404(category_id)
 
         if request.is_json:
             data = request.get_json()
@@ -70,7 +69,7 @@ def update_category(category_id):
             return jsonify({'success': False, 'message': 'El nombre de la categoría es obligatorio'}), 400
 
         # Verificar si el nuevo nombre ya existe en otra categoría
-        existing = Category.query.filter(Category.name == name, Category.id != category_id).first()
+        existing = Categoria.query.filter(Categoria.name == name, Categoria.id != category_id).first()
         if existing:
             return jsonify({'success': False, 'message': 'Otra categoría con ese nombre ya existe'}), 400
 
@@ -88,7 +87,7 @@ def update_category(category_id):
 def delete_category(category_id):
     """Eliminar categoría"""
     try:
-        category = Category.query.get_or_404(category_id)
+        category = Categoria.query.get_or_404(category_id)
 
         # Opcional: verificar si tiene productos asociados antes de eliminar
         if category.products and len(category.products) > 0:

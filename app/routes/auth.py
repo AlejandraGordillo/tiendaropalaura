@@ -1,13 +1,15 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db, mail
-from app.models1 import User  # ← Importar User (singular)
+from app.models.usuarios import User  # ← Importar User (singular)
 from flask_mail import Message
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
 import random
 import string
 from datetime import datetime, timedelta
+from app.models.products import Productos
+
 
 # Configurar logging
 logger = logging.getLogger(__name__)

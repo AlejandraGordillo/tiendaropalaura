@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify, request, render_template
 from flask_login import login_required
 from app import db
-from app.models1 import Product
+from app.models.products import Productos
+
+
 from decimal import Decimal
 
 products_bp = Blueprint('products', __name__)
@@ -11,7 +13,7 @@ def get_products():
     """Obtener todos los productos activos (API JSON)"""
     try:
         # OBTENER TODOS LOS PRODUCTOS ACTIVOS SIN LÍMITE
-        products = Product.query.filter_by(status='Activo').all()
+        products = products.query.filter_by(status='Activo').all()
         return jsonify([{
             'id': product.idProduct,
             'name': product.nameProduct,
@@ -31,13 +33,13 @@ def get_products():
 def product_detail(product_id):
     """Página de detalles del producto (HTML)"""
     try:
-        product = Product.query.get_or_404(product_id)
+        product = Productos.query.get_or_404(product_id)
         
         # Productos relacionados (misma categoría)
-        related_products = Product.query.filter(
-            Product.category == product.category,
-            Product.idProduct != product_id,
-            Product.status == 'Activo'
+        related_products = Productos.query.filter(
+            Productos.category == product.category,
+            Productos.idProduct != product_id,
+            Productos.status == 'Activo'
         ).limit(4).all()
         
         return render_template('product_detail.html', 
@@ -50,7 +52,7 @@ def product_detail(product_id):
 def get_product_detail(product_id):
     """Obtener detalles específicos de un producto (API JSON)"""
     try:
-        product = Product.query.get_or_404(product_id)
+        product = Productos.query.get_or_404(product_id)
         return jsonify({
             'id': product.idProduct,
             'name': product.nameProduct,
@@ -102,8 +104,8 @@ def add_product():
                 'success': False,
                 'message': 'Precio y stock deben ser valores numéricos'
             }), 400
-        
-        new_product = Product(
+
+        new_product = Productos(
             nameProduct=data['name'],
             category=data['category'],
             price=price,
@@ -114,11 +116,11 @@ def add_product():
         )
         
         # Añadir campos adicionales si existen en el modelo
-        if hasattr(Product, 'details') and 'details' in data:
+        if hasattr(Productos, 'details') and 'details' in data:
             new_product.details = data['details']
-        if hasattr(Product, 'size') and 'size' in data:
+        if hasattr(Productos, 'size') and 'size' in data:
             new_product.size = data['size']
-        if hasattr(Product, 'color') and 'color' in data:
+        if hasattr(Productos, 'color') and 'color' in data:
             new_product.color = data['color']
         
         db.session.add(new_product)
@@ -145,8 +147,8 @@ def add_product():
 def update_product(product_id):
     """Actualizar producto existente"""
     try:
-        product = Product.query.get_or_404(product_id)
-        
+        product = Productos.query.get_or_404(product_id)
+
         # Verificar si es JSON o form data
         if request.is_json:
             data = request.get_json()
@@ -215,7 +217,7 @@ def update_product(product_id):
 def delete_product(product_id):
     """Eliminar producto"""
     try:
-        product = Product.query.get_or_404(product_id)
+        product = Productos.query.get_or_404(product_id)
         db.session.delete(product)
         db.session.commit()
         
@@ -235,7 +237,7 @@ def delete_product(product_id):
 def get_products_by_category(category_name):
     """Obtener productos por categoría"""
     try:
-        products = Product.query.filter_by(
+        products = Productos.query.filter_by(
             category=category_name, 
             status='Activo'
         ).all()

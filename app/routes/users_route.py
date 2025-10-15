@@ -2,7 +2,11 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import db
-from app.models1 import User, Product
+from app.models.usuarios import User
+from app.models.products import Productos
+
+
+
 from app.decorators import admin_required
 
 bp = Blueprint('users', __name__)  # mantiene el mismo nombre que ya usabas
@@ -22,31 +26,38 @@ def is_user_admin(user):
     return False
 
 
-def _build_products_list(queryset):
-    """Normaliza objetos Product a dicts con keys estables que la plantilla usa."""
-    products = []
-    for p in queryset:
-        name = getattr(p, 'nameProduct', None) or getattr(p, 'name', None) or 'Producto'
-        id_ = getattr(p, 'idProduct', None) or getattr(p, 'id', None)
-        description = getattr(p, 'description', None) or ''
-        price = getattr(p, 'price', None) or 0
-        try:
-            price = float(price)
-        except Exception:
-            price = 0.0
-        image = getattr(p, 'image', None) or getattr(p, 'image_url', None) or f"https://via.placeholder.com/300x300?text={name}"
-        stock = getattr(p, 'stock', None) or 0
-        status = getattr(p, 'status', None) or ''
-        products.append({
-            'id': id_,
-            'name': name,
-            'description': description,
-            'price': price,
-            'image_url': image,
-            'stock': stock,
-            'status': status
-        })
-    return products
+from flask import Blueprint, render_template, request
+
+users = Blueprint('users', __name__)
+
+# 📦 Lista simulada de productos (sin base de datos)
+PRODUCTOS = [
+    {"nombre": "Camisa Elegante", "precio": 120000, "categoria": "Camisas", "imagen": "/static/img/camisa.jpg"},
+    {"nombre": "Zapatos de Cuero", "precio": 220000, "categoria": "Zapatos", "imagen": "/static/img/zapatos.jpg"},
+    {"nombre": "Chaqueta Negra", "precio": 350000, "categoria": "Chaquetas", "imagen": "/static/img/chaqueta.jpg"},
+    {"nombre": "Buzo Deportivo", "precio": 95000, "categoria": "Busos", "imagen": "/static/img/buzo.jpg"},
+    {"nombre": "Gorra Casual", "precio": 45000, "categoria": "Accesorios", "imagen": "/static/img/gorra.jpg"},
+    {"nombre": "Camisa Blanca", "precio": 115000, "categoria": "Camisas", "imagen": "/static/img/camisa2.jpg"},
+]
+
+@users.route('/productos')
+def productos():
+    categoria = request.args.get('categoria')  # Lee la categoría del query string (?categoria=Camisas)
+
+    if categoria:
+        productos_filtrados = [p for p in PRODUCTOS if p["categoria"] == categoria]
+    else:
+        productos_filtrados = PRODUCTOS
+
+    categorias = ['Camisas', 'Zapatos', 'Chaquetas', 'Busos', 'Accesorios']
+
+    return render_template(
+        'users/productos.html',
+        productos=productos_filtrados,
+        categorias=categorias,
+        categoria_seleccionada=categoria
+    )
+
 
 
 @bp.route('/dashboard')
@@ -75,22 +86,36 @@ def manage_users():
 @login_required
 def profile():
     """Perfil del usuario - Todos los roles"""
-    # Intentamos filtrar por status='Activo' si existe ese campo,
-    # si no, traemos los primeros 6 productos
     try:
-        products_q = Product.query.filter_by(status='Activo').limit(6).all()
+        # Intentamos filtrar por estado 'Activo'
+        products_q = Productos.query.filter_by(status='Activo').limit(6).all()
     except Exception:
-        products_q = Product.query.limit(6).all()
-    products = _build_products_list(products_q)
+        # Si algo falla (por ejemplo, la columna 'status' no existe)
+        products_q = Productos.query.limit(6).all()
+
+    # Convertimos los productos a una lista simple de diccionarios (si usas Jinja puedes pasar directamente)
+    products = []
+    for p in products_q:
+        products.append({
+            'id': p.idProduct,
+           'name': p.nameProduct,
+            'price': float(p.price),  # convertir a float para Jinja2
+            'description': p.description,
+            'image': p.image
+        })
 
     role_label = 'Administrador' if is_user_admin(current_user) else 'Usuario'
-    return render_template('users.html',
-                           user=current_user,
-                           username=getattr(current_user, 'nameUser', getattr(current_user, 'username', 'Usuario')),
-                           products=products,
-                           orders_count=0,
-                           points=100,
-                           role_label=role_label)
+
+    return render_template(
+        'users.html',
+        user=current_user,
+        username=getattr(current_user, 'nameUser', getattr(current_user, 'username', 'Usuario')),
+        products=products,
+        orders_count=0,
+        points=100,
+        role_label=role_label
+    )
+
 
 
 @bp.route('/admin/dashboard')

@@ -6,6 +6,8 @@ from flask_migrate import Migrate
 # ✅ ELIMINADA la importación circular: from app.models import Product
 import os
 
+
+
 # Importar la configuración
 from config import Config
 
@@ -32,7 +34,7 @@ def create_app():
     login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
     
     # Importar y configurar user_loader DENTRO de create_app
-    from app.models1 import User
+    from app.models.usuarios import User
     
     @login_manager.user_loader
     def load_user(user_id):
@@ -66,13 +68,13 @@ def create_app():
     @app.route('/')
     def index():
         # ✅ IMPORTAR Product DENTRO de la función para evitar circular import
-        from app.models1 import Product
+        from app.models.products import Productos
         
         page = request.args.get('page', 1, type=int)
         per_page = 30  # ✅ 30 productos por página (no 6)
         
         # Obtener productos con paginación
-        products_query = Product.query.filter_by(status='Activo')
+        products_query = Productos.query.filter_by(status='Activo')
         pagination = products_query.paginate(
             page=page, 
             per_page=per_page,
@@ -107,14 +109,16 @@ def create_app():
     from app.routes.users_route import bp as users_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.products import products_bp
-    from app.routes.cart import cart_bp
+    #from app.routes.cart import cart_bp
     from app.routes.pedidos import pedidos_bp
+    from app.routes.reportes import reportes_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(products_bp)
     app.register_blueprint(pedidos_bp)
-    app.register_blueprint(cart_bp)
+    #app.register_blueprint(cart_bp)
+    app.register_blueprint(reportes_bp)
     
     return app
