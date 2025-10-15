@@ -204,7 +204,6 @@
             font-size: 1.3rem;
             text-decoration: none;
             transition: var(--transition);
-            cursor: pointer;
         }
 
         .cart-badge {
@@ -221,72 +220,6 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-        }
-
-        /* Modal de Login */
-        .login-modal .modal-content {
-            border-radius: 0;
-            border: 1px solid var(--black);
-        }
-
-        .login-modal .modal-header {
-            border-bottom: 1px solid var(--gray-border);
-            background: var(--black);
-            color: var(--white);
-        }
-
-        .login-modal .modal-header .btn-close {
-            filter: invert(1);
-        }
-
-        .login-form .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .login-form label {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--black);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.9rem;
-        }
-
-        .login-form input {
-            border: 1px solid var(--gray-border);
-            border-radius: 0;
-            padding: 0.8rem 1rem;
-            width: 100%;
-            transition: var(--transition);
-        }
-
-        .login-form input:focus {
-            outline: none;
-            border-color: var(--black);
-            box-shadow: none;
-        }
-
-        .login-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .forgot-password {
-            color: var(--gray-medium);
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .forgot-password:hover {
-            color: var(--black);
         }
 
         /* =======================
@@ -921,15 +854,15 @@
                 <div class="search-results" id="searchResults"></div>
             </div>
             <div class="nav-icons">
-                <div class="cart-icon" onclick="handleCartClick()">
+                <a href="#" class="cart-icon" onclick="viewCart()">
                     <i class="fas fa-shopping-bag"></i>
                     <span class="cart-badge" id="cart-count">0</span>
-                </div>
+                </a>
                 <div class="auth-buttons">
-                    <a href="#" class="btn btn-outline" onclick="openLoginModal()">
+                    <a href="/login" class="btn btn-outline">
                         <i class="fas fa-sign-in-alt"></i> INICIAR SESIÓN
                     </a>
-                    <a href="#" class="btn btn-primary" onclick="openLoginModal()">
+                    <a href="/register" class="btn btn-primary">
                         <i class="fas fa-user-plus"></i> REGISTRARSE
                     </a>
                 </div>
@@ -1025,47 +958,6 @@
     </footer>
 
     <!-- =======================
-         MODAL DE LOGIN
-    ======================= -->
-    <div class="modal fade login-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="loginModalLabel">INICIAR SESIÓN</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form class="login-form" id="loginForm">
-                        <div class="form-group">
-                            <label for="email">EMAIL</label>
-                            <input type="email" id="email" name="email" required placeholder="tu@email.com">
-                        </div>
-                        <div class="form-group">
-                            <label for="password">CONTRASEÑA</label>
-                            <input type="password" id="password" name="password" required placeholder="••••••••">
-                        </div>
-                        <div class="login-options">
-                            <div class="remember-me">
-                                <input type="checkbox" id="remember">
-                                <label for="remember" style="margin: 0; font-size: 0.9rem;">Recordarme</label>
-                            </div>
-                            <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2">
-                            INICIAR SESIÓN
-                        </button>
-                    </form>
-                    <div class="text-center mt-3">
-                        <p style="color: var(--gray-medium); margin: 0;">¿No tienes cuenta? 
-                            <a href="#" style="color: var(--black); text-decoration: underline;" onclick="switchToRegister()">Regístrate aquí</a>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- =======================
          QUICK VIEW MODAL
     ======================= -->
     <div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewLabel" aria-hidden="true">
@@ -1109,10 +1001,6 @@
     ======================= -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Estado de autenticación (simulado)
-        let isUserLoggedIn = false;
-        let currentUser = null;
-
         // Base de datos de productos
         const products = [
             {
@@ -1178,55 +1066,6 @@
                 description: "Reloj de pulsera en negro con esfera minimalista y correa de cuero genuino."
             }
         ];
-
-        // Función para manejar el clic en el carrito
-        function handleCartClick() {
-            if (!isUserLoggedIn) {
-                openLoginModal();
-                showLoginMessage('Por favor, inicia sesión para acceder al carrito');
-            } else {
-                // Redirigir al carrito si el usuario está logueado
-                window.location.href = '/cart';
-            }
-        }
-
-        // Función para abrir el modal de login
-        function openLoginModal() {
-            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-            loginModal.show();
-        }
-
-        // Función para mostrar mensaje en el modal de login
-        function showLoginMessage(message) {
-            // Podríamos agregar un mensaje temporal en el modal
-            const modalBody = document.querySelector('.login-modal .modal-body');
-            
-            // Remover mensaje anterior si existe
-            const existingMessage = document.getElementById('loginMessage');
-            if (existingMessage) {
-                existingMessage.remove();
-            }
-            
-            // Agregar nuevo mensaje
-            const messageDiv = document.createElement('div');
-            messageDiv.id = 'loginMessage';
-            messageDiv.style.cssText = `
-                background: #f8f9fa;
-                border: 1px solid #e9ecef;
-                padding: 1rem;
-                margin-bottom: 1rem;
-                text-align: center;
-                font-weight: 600;
-            `;
-            messageDiv.textContent = message;
-            
-            modalBody.insertBefore(messageDiv, modalBody.firstChild);
-        }
-
-        // Función para cambiar a registro (placeholder)
-        function switchToRegister() {
-            showLoginMessage('Funcionalidad de registro en desarrollo');
-        }
 
         // Función para renderizar productos
         function renderProducts(productsToRender = products) {
@@ -1426,94 +1265,20 @@
                     });
                 });
             });
-
-            // Login form handling
-            const loginForm = document.getElementById('loginForm');
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                
-                // Simulación de login exitoso
-                if (email && password) {
-                    isUserLoggedIn = true;
-                    currentUser = { email: email };
-                    
-                    // Cerrar modal
-                    const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                    loginModal.hide();
-                    
-                    // Actualizar interfaz
-                    updateAuthUI();
-                    
-                    // Mostrar mensaje de éxito
-                    alert('¡Sesión iniciada correctamente!');
-                }
-            });
         });
-
-        // Función para actualizar la interfaz según el estado de autenticación
-        function updateAuthUI() {
-            const authButtons = document.querySelector('.auth-buttons');
-            
-            if (isUserLoggedIn && currentUser) {
-                authButtons.innerHTML = `
-                    <span style="color: var(--black); font-weight: 600;">Hola, ${currentUser.email.split('@')[0]}</span>
-                    <a href="/profile" class="btn btn-outline">
-                        <i class="fas fa-user"></i> MI CUENTA
-                    </a>
-                    <button class="btn btn-primary" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
-                    </button>
-                `;
-            }
-        }
-
-        // Función para cerrar sesión
-        function logout() {
-            isUserLoggedIn = false;
-            currentUser = null;
-            document.getElementById('cart-count').textContent = '0';
-            updateAuthUI();
-            alert('Sesión cerrada correctamente');
-        }
 
         // Add to Cart
         window.addToCart = function(productId) {
-            if (!isUserLoggedIn) {
-                openLoginModal();
-                showLoginMessage('Por favor, inicia sesión para agregar productos al carrito');
-                return;
-            }
-            
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            
-            if (product.stock <= 0) {
-                alert('Este producto está agotado');
-                return;
-            }
-            
-            alert(`¡${product.name} AGREGADO AL CARRITO!`);
+            alert('¡PRODUCTO AGREGADO AL CARRITO!');
             const badge = document.getElementById('cart-count');
             badge.textContent = (parseInt(badge.textContent) || 0) + 1;
         };
 
         // Add to Cart from Modal
         window.addToCartFromModal = function() {
-            if (!isUserLoggedIn) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('quickViewModal'));
-                modal.hide();
-                openLoginModal();
-                showLoginMessage('Por favor, inicia sesión para agregar productos al carrito');
-                return;
-            }
-            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('quickViewModal'));
             const productId = document.getElementById('quickViewModal').dataset.productId;
             addToCart(productId);
-            
-            const modal = bootstrap.Modal.getInstance(document.getElementById('quickViewModal'));
             modal.hide();
         };
 
@@ -1548,6 +1313,11 @@
             }
             
             modal.show();
+        };
+
+        // View Cart
+        window.viewCart = function() {
+            alert('REDIRIGIENDO AL CARRITO...');
         };
 
         // Smooth Scrolling
