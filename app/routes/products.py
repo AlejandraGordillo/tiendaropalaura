@@ -13,7 +13,7 @@ def get_products():
     """Obtener todos los productos activos (API JSON)"""
     try:
         # OBTENER TODOS LOS PRODUCTOS ACTIVOS SIN LÍMITE
-        products = products.query.filter_by(status='Activo').all()
+        products = Productos.query.filter_by(status='Activo').all()
         return jsonify([{
             'id': product.idProduct,
             'name': product.nameProduct,

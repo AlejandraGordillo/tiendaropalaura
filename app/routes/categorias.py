@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import login_required
 from app import db
 from app.models.categoria import Categoria
+
 categories_bp = Blueprint('categories', __name__)
 
 @categories_bp.route('/api/categories', methods=['GET'])

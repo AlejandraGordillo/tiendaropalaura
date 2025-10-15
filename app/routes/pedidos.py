@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify, request, session, render_template
 from flask_login import current_user, login_required
 from app.models.pedidos import Pedido, DetallePedido
-from datetime import datetime  # Para timestamps si necesitas
+from datetime import datetime 
+from app.models.products import Productos
+# Para timestamps si necesitas
 
 pedidos_bp = Blueprint('pedidos', __name__)
 
