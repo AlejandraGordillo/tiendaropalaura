@@ -2,7 +2,9 @@ from flask import Blueprint, render_template, jsonify, request, redirect, url_fo
 from flask_login import login_required, current_user, logout_user
 from app import db
 from datetime import datetime
-from app.models.products import Productos  # Tu modelo real
+from app.models.products import Productos
+from app.models.usuarios import User
+import traceback  # ✅ Para mostrar errores en consola
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -22,16 +24,21 @@ def dashboard():
 @login_required
 def dashboard_stats():
     try:
-        from app.models import Order, OrderDetail, User
+        try:
+            from app.models import Order
+        except ImportError:
+            Order = None
 
         total_products = Productos.query.count()
-        total_orders = Order.query.count() if 'Order' in locals() else 0
+        total_orders = Order.query.count() if Order else 0
         total_users = User.query.count()
 
-        # Calcular ingresos de hoy
         today = datetime.now().date()
-        today_orders = Order.query.filter(Order.orderDate >= today).all() if 'Order' in locals() else []
-        today_income = sum(float(order.totalAmount) for order in today_orders) if today_orders else 0
+        if Order:
+            today_orders = Order.query.filter(Order.orderDate >= today).all()
+            today_income = sum(float(order.totalAmount) for order in today_orders)
+        else:
+            today_income = 0
 
         return jsonify({
             'total_products': total_products,
@@ -42,7 +49,8 @@ def dashboard_stats():
             'popular_products': []
         })
     except Exception as e:
-        print(f"Error en dashboard stats: {e}")
+        print(f"⚠️ Error en dashboard_stats: {e}")
+        traceback.print_exc()
         return jsonify({
             'total_products': 0,
             'total_orders': 0,
@@ -75,7 +83,8 @@ def get_products():
             for p in products
         ])
     except Exception as e:
-        print(f"Error obteniendo productos: {e}")
+        print(f"⚠️ Error obteniendo productos: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -98,7 +107,8 @@ def add_product():
         db.session.commit()
         return jsonify({'message': 'Producto agregado correctamente'})
     except Exception as e:
-        print(f"Error agregando producto: {e}")
+        print(f"⚠️ Error agregando producto: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -120,7 +130,8 @@ def update_product(product_id):
         db.session.commit()
         return jsonify({'message': 'Producto actualizado correctamente'})
     except Exception as e:
-        print(f"Error actualizando producto: {e}")
+        print(f"⚠️ Error actualizando producto: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -133,7 +144,8 @@ def delete_product(product_id):
         db.session.commit()
         return jsonify({'message': 'Producto eliminado correctamente'})
     except Exception as e:
-        print(f"Error eliminando producto: {e}")
+        print(f"⚠️ Error eliminando producto: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -144,7 +156,6 @@ def delete_product(product_id):
 @login_required
 def get_users():
     try:
-        from app.models import User
         users = User.query.all()
         return jsonify([
             {
@@ -158,7 +169,8 @@ def get_users():
             for u in users
         ])
     except Exception as e:
-        print(f"Error obteniendo usuarios: {e}")
+        print(f"⚠️ Error obteniendo usuarios: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -166,19 +178,52 @@ def get_users():
 @login_required
 def delete_user(user_id):
     try:
-        from app.models import User
-        user = User.query.get_or_404(user_id)
-        if user.idUser == current_user.idUser:
-            return jsonify({'error': 'No puedes eliminar tu propio usuario'}), 400
+        print(f"🧹 Intentando eliminar usuario con ID: {user_id}")
+        
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({
+                'success': False,
+                'error': 'Usuario no encontrado'
+            }), 404
 
+        if user.idUser == current_user.idUser:
+            return jsonify({
+                'success': False,
+                'error': 'No puedes eliminar tu propio usuario'
+            }), 400
+
+        # ELIMINAR MANUALMENTE LOS CART ITEMS PRIMERO
+        try:
+            # Importar CartItem dentro del try para evitar errores de importación
+            from app.models.usuarios import CartItem
+            # Contar y eliminar items del carrito
+            cart_items = CartItem.query.filter_by(idUser=user_id).all()
+            for item in cart_items:
+                db.session.delete(item)
+            print(f"🗑️ Eliminados {len(cart_items)} items del carrito")
+        except Exception as cart_error:
+            print(f"⚠️ Error con cart items: {cart_error}")
+            # Continuar aunque falle
+
+        # Ahora eliminar el usuario
         db.session.delete(user)
         db.session.commit()
-        return jsonify({'message': 'Usuario eliminado correctamente'})
+        
+        print(f"✅ Usuario eliminado correctamente: {user.nameUser}")
+        return jsonify({
+            'success': True,
+            'message': f'Usuario {user.nameUser} eliminado correctamente'
+        })
+
     except Exception as e:
-        print(f"Error eliminando usuario: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
+        db.session.rollback()
+        print(f"❌ Error al eliminar usuario: {str(e)}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Error del servidor: {str(e)}'
+        }), 500
 # =======================
 # CATEGORÍAS
 # =======================
@@ -199,7 +244,8 @@ def get_categories():
             for c in categories
         ])
     except Exception as e:
-        print(f"Error obteniendo categorías: {e}")
+        print(f"⚠️ Error obteniendo categorías: {e}")
+        traceback.print_exc()
         return jsonify([
             {'id': 'C001', 'name': 'Vestidos', 'description': 'Vestidos para mujer', 'products_count': 56, 'status': 'Activa'},
             {'id': 'C002', 'name': 'Pantalones', 'description': 'Pantalones de moda', 'products_count': 42, 'status': 'Activa'},
@@ -225,7 +271,8 @@ def get_sales_report():
             'sales_trend': [1200, 1900, 3000, 2500, 2800, 3200]
         })
     except Exception as e:
-        print(f"Error generando reporte: {e}")
+        print(f"⚠️ Error generando reporte: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -241,7 +288,8 @@ def get_config():
             'free_shipping_min': 500.00
         })
     except Exception as e:
-        print(f"Error obteniendo configuración: {e}")
+        print(f"⚠️ Error obteniendo configuración: {e}")
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 

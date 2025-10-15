@@ -4,6 +4,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
+
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     __table_args__ = {'extend_existing': True}
