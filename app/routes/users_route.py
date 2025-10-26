@@ -94,15 +94,14 @@ def profile():
     role_label = 'Administrador' if is_user_admin(current_user) else 'Usuario'
 
     return render_template(
-        'users.html',
-        user=current_user,
-        username=getattr(current_user, 'nameUser', getattr(current_user, 'username', 'Usuario')),
-        products=products,
-        orders_count=0,
-        points=100,
-        role_label=role_label
-    )
-
+    'users.html',
+    user=current_user,
+    username=getattr(current_user, 'nameUser', getattr(current_user, 'username', 'Usuario')),
+    products=products,
+    orders_count=0,
+    points=100,
+    role_label=role_label
+)
 
 # 🔸 Editar perfil
 @bp.route('/edit_profile', methods=['GET', 'POST'])

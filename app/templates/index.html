@@ -1000,335 +1000,239 @@
          SCRIPTS
     ======================= -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Base de datos de productos
-        const products = [
-            {
-                id: 1,
-                name: "Camiseta Esencial Negro",
-                category: "ropa",
-                subcategory: "nuevo",
-                price: 45.99,
-                stock: 12,
-                image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                description: "Camiseta de algodón premium en color negro, corte clásico y acabados impecables."
-            },
-            {
-                id: 2,
-                name: "Zapatos Oxford Negro",
-                category: "zapatos",
-                subcategory: "",
-                price: 129.99,
-                stock: 5,
-                image: "https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                description: "Zapatos Oxford de cuero negro con diseño clásico y suela de cuero genuino."
-            },
-            {
-                id: 3,
-                name: "Bolso Minimalista Negro",
-                category: "accesorios",
-                subcategory: "ofertas",
-                price: 89.99,
-                originalPrice: 120.00,
-                stock: 8,
-                image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                description: "Bolso de diseño minimalista en cuero negro, perfecto para el día a día."
-            },
-            {
-                id: 4,
-                name: "Vestido Largo Negro",
-                category: "ropa",
-                subcategory: "nuevo",
-                price: 79.99,
-                stock: 6,
-                image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                description: "Vestido largo en negro con diseño elegante y tejido fluido para ocasiones especiales."
-            },
-            {
-                id: 5,
-                name: "Tacones Elegantes Negro",
-                category: "zapatos",
-                subcategory: "ofertas",
-                price: 69.99,
-                originalPrice: 89.99,
-                stock: 10,
-                image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                description: "Tacones en negro con diseño contemporáneo y detalles en acabado mate."
-            },
-            {
-                id: 6,
-                name: "Reloj Clásico Negro",
-                category: "accesorios",
-                subcategory: "",
-                price: 199.99,
-                stock: 3,
-                image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                description: "Reloj de pulsera en negro con esfera minimalista y correa de cuero genuino."
-            }
-        ];
+<script>
+    // Variable global para almacenar los productos
+    let products = [];
 
-        // Función para renderizar productos
-        function renderProducts(productsToRender = products) {
-            const productsGrid = document.getElementById('productsGrid');
+    // Renderizar tabla de productos desde el servidor MySQL
+    async function renderProductsTable() {
+        try {
+            // Obtener productos del servidor Flask
+            const response = await fetch('/api/products');
             
-            if (productsToRender.length === 0) {
-                productsGrid.innerHTML = `
-                    <div class="no-results">
-                        <i class="fas fa-search"></i>
-                        <h3>No se encontraron productos</h3>
-                        <p>Intenta con otros términos de búsqueda o categorías</p>
-                    </div>
-                `;
-                return;
+            // Verificar si la respuesta es exitosa
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
             }
+            
+            // Convertir respuesta a JSON y guardarla en variable global
+            products = await response.json();
 
-            productsGrid.innerHTML = productsToRender.map(product => `
-                <div class="product-card" data-category="${product.category} ${product.subcategory}">
-                    <div class="product-image">
-                        <img src="${product.image}" alt="${product.name}">
-                        <div class="product-overlay">
-                            <div class="product-actions">
-                                <button class="product-action-btn" onclick="quickView(${product.id})" 
-                                        data-product-id="${product.id}" 
-                                        data-product-name="${product.name}" 
-                                        data-product-price="${product.price}" 
-                                        data-product-category="${getCategoryName(product.category)}">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                                <a href="#" class="product-action-btn">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <button class="product-action-btn" onclick="addToCart(${product.id})">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="product-info">
-                        <div class="product-category">${getCategoryName(product.category)}</div>
-                        <h3 class="product-title">${product.name}</h3>
-                        <p class="product-description">${product.description}</p>
-                        <div class="product-price">
-                            ${product.originalPrice ? 
-                                `<span style="text-decoration: line-through; color: var(--gray-medium); margin-right: 0.5rem;">$${product.originalPrice.toFixed(2)}</span>` 
-                                : ''}
-                            $${product.price.toFixed(2)}
-                        </div>
-                        <div class="product-stock ${product.stock <= 0 ? 'out-of-stock' : ''}">
-                            ${product.stock > 0 ? `En stock: ${product.stock} unidades` : 'Agotado'}
-                        </div>
-                        <div class="product-buttons">
-                            <a href="#" class="btn btn-outline btn-sm">
-                                <i class="fas fa-eye"></i> VER DETALLES
-                            </a>
-                            <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})" ${product.stock <= 0 ? 'disabled' : ''}>
-                                <i class="fas fa-shopping-cart"></i> ${product.stock > 0 ? 'AÑADIR' : 'AGOTADO'}
+            // Renderizar productos en pantalla
+            renderProducts(products);
+
+        } catch (error) {
+            console.error('Error al obtener los productos:', error);
+
+            const productsGrid = document.getElementById('productsGrid');
+            productsGrid.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error al cargar los productos</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // Función para renderizar productos
+    function renderProducts(productsToRender = []) {
+        const productsGrid = document.getElementById('productsGrid');
+        
+        if (!productsToRender || productsToRender.length === 0) {
+            productsGrid.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <h3>No se encontraron productos</h3>
+                    <p>Intenta con otros términos de búsqueda o categorías</p>
+                </div>
+            `;
+            return;
+        }
+
+        productsGrid.innerHTML = productsToRender.map(product => `
+            <div class="product-card" data-category="${product.category} ${product.subcategory}">
+                <div class="product-image">
+                    <img src="${product.image}" alt="${product.name}">
+                    <div class="product-overlay">
+                        <div class="product-actions">
+                            <button class="product-action-btn" onclick="quickView(${product.id})" 
+                                    data-product-id="${product.id}" 
+                                    data-product-name="${product.name}" 
+                                    data-product-price="${product.price}" 
+                                    data-product-category="${getCategoryName(product.category)}">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button class="product-action-btn" onclick="addToCart(${product.id})">
+                                <i class="fas fa-shopping-cart"></i>
                             </button>
                         </div>
                     </div>
-                    ${product.subcategory === 'nuevo' ? '<div class="new-badge">NUEVO</div>' : ''}
-                    ${product.subcategory === 'ofertas' ? '<div class="sale-badge">OFERTA</div>' : ''}
                 </div>
-            `).join('');
-        }
-
-        // Función para obtener nombre de categoría
-        function getCategoryName(category) {
-            const categories = {
-                'ropa': 'Ropa',
-                'zapatos': 'Zapatos',
-                'accesorios': 'Accesorios'
-            };
-            return categories[category] || category;
-        }
-
-        // Función de búsqueda
-        function searchProducts(query) {
-            if (!query.trim()) {
-                return products;
-            }
-            
-            const searchTerm = query.toLowerCase().trim();
-            return products.filter(product => 
-                product.name.toLowerCase().includes(searchTerm) ||
-                product.description.toLowerCase().includes(searchTerm) ||
-                getCategoryName(product.category).toLowerCase().includes(searchTerm)
-            );
-        }
-
-        // Función para mostrar resultados de búsqueda en dropdown
-        function showSearchResults(query) {
-            const resultsContainer = document.getElementById('searchResults');
-            const results = searchProducts(query).slice(0, 5); // Mostrar máximo 5 resultados
-            
-            if (query.trim() === '' || results.length === 0) {
-                resultsContainer.style.display = 'none';
-                return;
-            }
-            
-            resultsContainer.innerHTML = results.map(product => `
-                <div class="search-result-item" onclick="selectSearchResult('${product.name}')">
-                    <div class="search-result-name">${product.name}</div>
-                    <div class="search-result-category">${getCategoryName(product.category)} - $${product.price.toFixed(2)}</div>
+                <div class="product-info">
+                    <div class="product-category">${getCategoryName(product.category)}</div>
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-description">${product.description}</p>
+                    <div class="product-price">
+                        ${product.originalPrice ? 
+                            `<span style="text-decoration: line-through; color: var(--gray-medium); margin-right: 0.5rem;">$${product.originalPrice.toFixed(2)}</span>` 
+                            : ''}
+                        $${product.price.toFixed(2)}
+                    </div>
+                    <div class="product-stock ${product.stock <= 0 ? 'out-of-stock' : ''}">
+                        ${product.stock > 0 ? `En stock: ${product.stock} unidades` : 'Agotado'}
+                    </div>
+                    <div class="product-buttons">
+                        <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id})" ${product.stock <= 0 ? 'disabled' : ''}>
+                            <i class="fas fa-shopping-cart"></i> ${product.stock > 0 ? 'AÑADIR' : 'AGOTADO'}
+                        </button>
+                    </div>
                 </div>
-            `).join('');
-            
-            resultsContainer.style.display = 'block';
-        }
+                ${product.subcategory === 'nuevo' ? '<div class="new-badge">NUEVO</div>' : ''}
+                ${product.subcategory === 'ofertas' ? '<div class="sale-badge">OFERTA</div>' : ''}
+            </div>
+        `).join('');
+    }
 
-        // Función para seleccionar resultado de búsqueda
-        function selectSearchResult(productName) {
-            document.getElementById('searchInput').value = productName;
-            document.getElementById('searchResults').style.display = 'none';
-            filterProductsBySearch(productName);
-        }
+    // Ejecutar al cargar la página
+    document.addEventListener('DOMContentLoaded', renderProductsTable);
 
-        // Función para filtrar productos por búsqueda
-        function filterProductsBySearch(query) {
-            const filteredProducts = searchProducts(query);
-            renderProducts(filteredProducts);
-            
-            // Actualizar categorías activas
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
+    // Función para obtener nombre de categoría
+    function getCategoryName(category) {
+        const categories = {
+            'ropa': 'Ropa',
+            'zapatos': 'Zapatos',
+            'accesorios': 'Accesorios'
+        };
+        return categories[category] || category;
+    }
+
+    // Función de búsqueda
+    function searchProducts(query) {
+        if (!query.trim()) {
+            return products;
+        }
+        
+        const searchTerm = query.toLowerCase().trim();
+        return products.filter(product => 
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.description.toLowerCase().includes(searchTerm) ||
+            getCategoryName(product.category).toLowerCase().includes(searchTerm)
+        );
+    }
+
+    // Función para mostrar resultados de búsqueda en dropdown
+    function showSearchResults(query) {
+        const resultsContainer = document.getElementById('searchResults');
+        const results = searchProducts(query).slice(0, 5); // Máximo 5 resultados
+        
+        if (query.trim() === '' || results.length === 0) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+        
+        resultsContainer.innerHTML = results.map(product => `
+            <div class="search-result-item" onclick="selectSearchResult('${product.name}')">
+                <div class="search-result-name">${product.name}</div>
+                <div class="search-result-category">${getCategoryName(product.category)} - $${product.price.toFixed(2)}</div>
+            </div>
+        `).join('');
+        
+        resultsContainer.style.display = 'block';
+    }
+
+    // Función  para seleccionar resultado de búsqueda
+    function selectSearchResult(productName) {
+        document.getElementById('searchInput').value = productName;
+        document.getElementById('searchResults').style.display = 'none';
+        filterProductsBySearch(productName);
+    }
+
+    // Función para filtrar productos por búsqueda
+    function filterProductsBySearch(query) {
+        const filteredProducts = searchProducts(query);
+        renderProducts(filteredProducts);
+        
+        // Actualizar categorías activas
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector('.category-btn[data-category="all"]').classList.add('active');
+    }
+
+    // Inicializar filtros, búsqueda, etc.
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                categoryButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                const filteredProducts = category === 'all' 
+                    ? products 
+                    : products.filter(p => p.category === category || p.subcategory === category);
+                
+                renderProducts(filteredProducts);
             });
-            document.querySelector('.category-btn[data-category="all"]').classList.add('active');
-        }
+        });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Renderizar productos iniciales
-            renderProducts();
-
-            // Category Filter Functionality
-            const categoryButtons = document.querySelectorAll('.category-btn');
-            
-            categoryButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all buttons
-                    categoryButtons.forEach(btn => btn.classList.remove('active'));
-                    // Add active class to clicked button
-                    this.classList.add('active');
-                    
-                    const category = this.getAttribute('data-category');
-                    
-                    // Filter products
-                    let filteredProducts;
-                    if (category === 'all') {
-                        filteredProducts = products;
-                    } else {
-                        filteredProducts = products.filter(product => 
-                            product.category === category || product.subcategory === category
-                        );
-                    }
-                    
-                    renderProducts(filteredProducts);
-                });
-            });
-
-            // Search functionality
-            const searchInput = document.getElementById('searchInput');
-            const searchResults = document.getElementById('searchResults');
-            
-            searchInput.addEventListener('input', function() {
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        
+        searchInput.addEventListener('input', function() {
+            showSearchResults(this.value);
+        });
+        
+        searchInput.addEventListener('focus', function() {
+            if (this.value.trim() !== '') {
                 showSearchResults(this.value);
-            });
-            
-            searchInput.addEventListener('focus', function() {
-                if (this.value.trim() !== '') {
-                    showSearchResults(this.value);
-                }
-            });
-            
-            // Cerrar resultados al hacer clic fuera
-            document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                    searchResults.style.display = 'none';
-                }
-            });
-
-            // Category links in footer
-            document.querySelectorAll('.footer-section a[data-category]').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const category = this.getAttribute('data-category');
-                    
-                    // Find and click the corresponding category button
-                    categoryButtons.forEach(button => {
-                        if (button.getAttribute('data-category') === category) {
-                            button.click();
-                        }
-                    });
-                    
-                    // Scroll to products section
-                    document.getElementById('productos').scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                });
-            });
-        });
-
-        // Add to Cart
-        window.addToCart = function(productId) {
-            alert('¡PRODUCTO AGREGADO AL CARRITO!');
-            const badge = document.getElementById('cart-count');
-            badge.textContent = (parseInt(badge.textContent) || 0) + 1;
-        };
-
-        // Add to Cart from Modal
-        window.addToCartFromModal = function() {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('quickViewModal'));
-            const productId = document.getElementById('quickViewModal').dataset.productId;
-            addToCart(productId);
-            modal.hide();
-        };
-
-        // Quick View
-        window.quickView = function(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            
-            const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
-            
-            // Guardar el ID del producto en el modal
-            document.getElementById('quickViewModal').dataset.productId = productId;
-            
-            // Obtener información del producto
-            document.getElementById('quickViewName').textContent = product.name;
-            document.getElementById('quickViewCategory').textContent = getCategoryName(product.category);
-            document.getElementById('quickViewPrice').textContent = `$${product.price.toFixed(2)}`;
-            document.getElementById('quickViewStock').textContent = product.stock > 0 ? 
-                `En stock: ${product.stock} unidades` : 'Agotado';
-            document.getElementById('quickViewImage').src = product.image;
-            
-            // Habilitar o deshabilitar botón según stock
-            const addToCartBtn = document.getElementById('quickViewAddToCart');
-            if (product.stock <= 0) {
-                addToCartBtn.disabled = true;
-                addToCartBtn.textContent = 'PRODUCTO AGOTADO';
-                addToCartBtn.className = 'btn btn-secondary w-100 py-2';
-            } else {
-                addToCartBtn.disabled = false;
-                addToCartBtn.textContent = 'AGREGAR AL CARRITO';
-                addToCartBtn.className = 'btn btn-primary w-100 py-2';
             }
-            
-            modal.show();
-        };
-
-        // View Cart
-        window.viewCart = function() {
-            alert('REDIRIGIENDO AL CARRITO...');
-        };
-
-        // Smooth Scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
         });
-    </script>
+        
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    });
+
+    // Add to Cart
+    window.addToCart = function(productId) {
+        alert('¡PRODUCTO AGREGADO AL CARRITO!');
+        const badge = document.getElementById('cart-count');
+        badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+    };
+
+    // Quick View
+    window.quickView = function(productId) {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        
+        const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+        document.getElementById('quickViewModal').dataset.productId = productId;
+        document.getElementById('quickViewName').textContent = product.name;
+        document.getElementById('quickViewCategory').textContent = getCategoryName(product.category);
+        document.getElementById('quickViewPrice').textContent = `$${product.price.toFixed(2)}`;
+        document.getElementById('quickViewStock').textContent = product.stock > 0 ? 
+            `En stock: ${product.stock} unidades` : 'Agotado';
+        document.getElementById('quickViewImage').src = product.image;
+        
+        const addToCartBtn = document.getElementById('quickViewAddToCart');
+        if (product.stock <= 0) {
+            addToCartBtn.disabled = true;
+            addToCartBtn.textContent = 'PRODUCTO AGOTADO';
+            addToCartBtn.className = 'btn btn-secondary w-100 py-2';
+        } else {
+            addToCartBtn.disabled = false;
+            addToCartBtn.textContent = 'AGREGAR AL CARRITO';
+            addToCartBtn.className = 'btn btn-primary w-100 py-2';
+        }
+        
+        modal.show();
+    };
+</script>
+
 </body>
 </html>

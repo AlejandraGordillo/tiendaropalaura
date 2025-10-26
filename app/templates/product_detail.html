@@ -353,6 +353,16 @@
             background: var(--medium-gray);
             color: var(--text-light);
         }
+
+        /* Mensajes de alerta */
+        .alert-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -363,16 +373,26 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/"><i class="bi bi-house"></i> Inicio</a>
                 <a class="nav-link" href="/cart"><i class="bi bi-cart"></i> Carrito</a>
+                {% if current_user.is_authenticated %}
+                <a class="nav-link" href="/dashboard"><i class="bi bi-person-circle"></i> Mi Cuenta</a>
+                {% else %}
+                <a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+                {% endif %}
             </div>
         </div>
     </nav>
+
+    <!-- Mensaje de alerta -->
+    <div class="alert alert-success alert-message" id="successAlert" role="alert">
+        <i class="bi bi-check-circle"></i> Producto agregado al carrito correctamente!
+    </div>
 
     <div class="container py-4">
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/">Inicio</a></li>
-                <li class="breadcrumb-item"><a href="/products">{{ product.category }}</a></li>
+                <li class="breadcrumb-item"><a href="/products?category={{ product.category }}">{{ product.category }}</a></li>
                 <li class="breadcrumb-item active">{{ product.nameProduct }}</li>
             </ol>
         </nav>
@@ -391,7 +411,13 @@
                              class="thumbnail active" 
                              onclick="changeImage(this)"
                              alt="Vista 1">
-                        <!-- Más miniaturas aquí -->
+                        <!-- Más miniaturas aquí si hay imágenes adicionales -->
+                        {% if product.image %}
+                        <img src="{{ product.image }}" 
+                             class="thumbnail" 
+                             onclick="changeImage(this)"
+                             alt="Vista 2">
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -404,9 +430,9 @@
                     
                     <div class="price-section">
                         <span class="current-price">${{ "%.2f"|format(product.price) }}</span>
-                        {% if product.original_price %}
+                        {% if product.original_price and product.original_price > product.price %}
                         <span class="original-price">${{ "%.2f"|format(product.original_price) }}</span>
-                        <span class="discount-badge">-{{ ((1 - product.price/product.original_price) * 100)|round }}%</span>
+                        <span class="discount-badge">-{{ ((1 - product.price/product.original_price) * 100)|round|int }}%</span>
                         {% endif %}
                     </div>
 
@@ -426,7 +452,7 @@
                         <div class="option-label">Talla</div>
                         <div class="d-flex flex-wrap">
                             {% for size in product.size.split(',') %}
-                            <div class="option-btn" onclick="selectOption(this, 'size')">{{ size.strip() }}</div>
+                            <button type="button" class="option-btn" onclick="selectOption(this, 'size')">{{ size.strip() }}</button>
                             {% endfor %}
                         </div>
                     </div>
@@ -437,7 +463,7 @@
                         <div class="option-label">Color</div>
                         <div class="d-flex flex-wrap">
                             {% for color in product.color.split(',') %}
-                            <div class="option-btn" onclick="selectOption(this, 'color')">{{ color.strip() }}</div>
+                            <button type="button" class="option-btn" onclick="selectOption(this, 'color')">{{ color.strip() }}</button>
                             {% endfor %}
                         </div>
                     </div>
@@ -447,16 +473,16 @@
                     <div class="option-selector">
                         <div class="option-label">Cantidad</div>
                         <div class="quantity-control">
-                            <button class="quantity-btn" onclick="decreaseQuantity()">-</button>
+                            <button type="button" class="quantity-btn" onclick="decreaseQuantity()">-</button>
                             <input type="number" class="quantity-input" value="1" min="1" max="{{ product.stock }}" id="quantity">
-                            <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                            <button type="button" class="quantity-btn" onclick="increaseQuantity()">+</button>
                         </div>
                     </div>
 
                     <!-- Botones de Acción -->
                     <div class="action-buttons">
                         {% if product.stock > 0 %}
-                        <button class="btn-add-cart" onclick="addToCart()">
+                        <button class="btn-add-cart" onclick="addToCart({{ product.idProduct }})">
                             <i class="bi bi-cart-plus"></i> Agregar al Carrito
                         </button>
                         {% else %}
@@ -464,7 +490,7 @@
                             <i class="bi bi-x-circle"></i> Producto Agotado
                         </button>
                         {% endif %}
-                        <button class="btn-secondary-action">
+                        <button class="btn-secondary-action" onclick="addToWishlist({{ product.idProduct }})">
                             <i class="bi bi-heart"></i> Agregar a Favoritos
                         </button>
                     </div>
@@ -473,7 +499,8 @@
                     <div class="details-section">
                         <h5 class="details-title">Características</h5>
                         <ul class="features-list">
-                            <li><strong>Material:</strong> {{ product.details or 'Alta calidad' }}</li>
+                            <li><strong>Material:</strong> {{ product.material or 'Alta calidad' }}</li>
+                            <li><strong>Cuidado:</strong> {{ product.care_instructions or 'Lavar a mano' }}</li>
                             <li><strong>Envío:</strong> Gratuito en compras mayores a $100</li>
                             <li><strong>Devoluciones:</strong> Gratis en 30 días</li>
                         </ul>
@@ -485,14 +512,17 @@
         <!-- Descripción Extendida -->
         <div class="details-section">
             <h5 class="details-title">Descripción del Producto</h5>
-            <p>{{ product.description or 'Este producto combina estilo y comodidad. Fabricado con materiales de primera calidad, es perfecto para ocasiones especiales y uso diario.' }}</p>
+            <p>{{ product.long_description or product.description or 'Este producto combina estilo y comodidad. Fabricado con materiales de primera calidad, es perfecto para ocasiones especiales y uso diario. Diseñado para ofrecer el máximo confort sin sacrificar el estilo.' }}</p>
             
             <h6 class="option-label mt-4">Especificaciones</h6>
             <ul class="features-list">
                 <li><strong>Categoría:</strong> {{ product.category }}</li>
                 {% if product.size %}<li><strong>Tallas disponibles:</strong> {{ product.size }}</li>{% endif %}
                 {% if product.color %}<li><strong>Colores:</strong> {{ product.color }}</li>{% endif %}
+                {% if product.material %}<li><strong>Material:</strong> {{ product.material }}</li>{% endif %}
+                {% if product.brand %}<li><strong>Marca:</strong> {{ product.brand }}</li>{% endif %}
                 <li><strong>SKU:</strong> PROD-{{ product.idProduct }}</li>
+                <li><strong>Disponibilidad:</strong> {{ product.stock }} unidades</li>
             </ul>
         </div>
 
@@ -502,11 +532,12 @@
             <h3 class="related-title">Productos Relacionados</h3>
             <div class="row">
                 {% for related in related_products %}
-                <div class="col-md-3 mb-4">
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                     <div class="related-card">
                         <img src="{{ related.image or 'https://via.placeholder.com/250x300/ffffff/cccccc?text=Related+Product' }}" 
                              class="card-img-top" 
-                             alt="{{ related.nameProduct }}">
+                             alt="{{ related.nameProduct }}"
+                             style="height: 250px; object-fit: cover;">
                         <div class="related-card-body">
                             <h6 class="related-product-name">{{ related.nameProduct }}</h6>
                             <p class="related-product-price">${{ "%.2f"|format(related.price) }}</p>
@@ -525,10 +556,17 @@
     <footer>
         <div class="container">
             <p>&copy; 2024 Fashion Boutique. Todos los derechos reservados.</p>
+            <div class="mt-2">
+                <small>Desarrollado con ❤️ para amantes de la moda</small>
+            </div>
         </div>
     </footer>
 
     <script>
+        // Variables globales para las selecciones
+        let selectedSize = null;
+        let selectedColor = null;
+
         function changeImage(element) {
             document.getElementById('mainImage').src = element.src;
             document.querySelectorAll('.thumbnail').forEach(thumb => {
@@ -546,6 +584,13 @@
             
             // Agregar active al elemento seleccionado
             element.classList.add('active');
+            
+            // Guardar la selección
+            if (type === 'size') {
+                selectedSize = element.textContent;
+            } else if (type === 'color') {
+                selectedColor = element.textContent;
+            }
         }
 
         function increaseQuantity() {
@@ -563,11 +608,97 @@
             }
         }
 
-        function addToCart() {
-            // Aquí iría la lógica para agregar al carrito
-            alert('Producto agregado al carrito!');
-            // Redirigir al carrito o mostrar modal
+        function showAlert(message, type = 'success') {
+            const alert = document.getElementById('successAlert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type} alert-message`;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 3000);
         }
+
+        async function addToCart(productId) {
+            const quantity = parseInt(document.getElementById('quantity').value);
+            
+            // Validar selecciones si son requeridas
+            if ((selectedSize === null && document.querySelector('.option-btn[onclick*="size"]')) || 
+                (selectedColor === null && document.querySelector('.option-btn[onclick*="color"]'))) {
+                showAlert('Por favor selecciona talla y color antes de agregar al carrito', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: quantity,
+                        size: selectedSize,
+                        color: selectedColor
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('Producto agregado al carrito correctamente!');
+                    // Actualizar contador del carrito si existe
+                    updateCartCounter();
+                } else {
+                    showAlert(result.error || 'Error al agregar al carrito', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+
+        function addToWishlist(productId) {
+            // Aquí iría la lógica para agregar a favoritos
+            showAlert('Producto agregado a favoritos!');
+        }
+
+        function updateCartCounter() {
+            // Actualizar el contador del carrito en el navbar si existe
+            const cartCounter = document.querySelector('.cart-counter');
+            if (cartCounter) {
+                // Incrementar el contador
+                const currentCount = parseInt(cartCounter.textContent) || 0;
+                const quantity = parseInt(document.getElementById('quantity').value);
+                cartCounter.textContent = currentCount + quantity;
+            }
+        }
+
+        // Validar la cantidad al cambiar manualmente
+        document.getElementById('quantity').addEventListener('change', function() {
+            const max = parseInt(this.max);
+            const value = parseInt(this.value);
+            
+            if (value < 1) {
+                this.value = 1;
+            } else if (value > max) {
+                this.value = max;
+            }
+        });
+
+        // Inicializar selecciones si hay opciones por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleccionar primera talla y color por defecto si existen
+            const firstSize = document.querySelector('.option-btn[onclick*="size"]');
+            const firstColor = document.querySelector('.option-btn[onclick*="color"]');
+            
+            if (firstSize) {
+                firstSize.click();
+            }
+            if (firstColor) 
+                firstColor.click();
+            }
+        });
     </script>
 </body>
 </html>

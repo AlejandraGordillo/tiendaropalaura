@@ -8,7 +8,6 @@ class Productos(db.Model):
     description = db.Column(db.Text)
     price = db.Column(db.Numeric(10,2))
     stock = db.Column(db.Integer)
-    category = db.Column(db.String(50))
     image = db.Column(db.String(255))
     status = db.Column(db.String(20))
     category = db.Column(db.String(50))

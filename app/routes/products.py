@@ -1,12 +1,37 @@
-from flask import Blueprint, jsonify, request, render_template
-from flask_login import login_required
+from flask import Blueprint, jsonify, request, render_template, redirect
+from flask_login import login_required, current_user
 from app import db
 from app.models.products import Productos
-
-
 from decimal import Decimal
 
 products_bp = Blueprint('products', __name__)
+
+# ✅ RUTA PRINCIPAL - PÁGINA DE INICIO
+@products_bp.route('/')
+def index():
+    
+    """Página principal que muestra los productos"""
+    try:
+        print("🎯 Accediendo a la página principal...")
+        
+        # Obtener productos activos para mostrar en la página principal
+        products = Productos.query.filter_by(status='Activo').limit(12).all()
+        
+        print(f"📦 Productos encontrados: {len(products)}")
+        for product in products:
+            print(f"   - {product.nameProduct} (ID: {product.idProduct}, Stock: {product.stock})")
+        
+        # Renderizar la plantilla index.html con los productos
+        return render_template('index.html', 
+                             products=products,
+                             current_user=current_user)
+                             
+    except Exception as e:
+        print(f"❌ Error en la página principal: {e}")
+        # Si hay error, mostrar página sin productos
+        return render_template('index.html', 
+                             products=[],
+                             current_user=current_user)
 
 @products_bp.route('/api/products', methods=['GET'])
 def get_products():
@@ -112,7 +137,7 @@ def add_product():
             stock=stock,
             description=data.get('description', ''),
             image=data.get('image', ''),
-            status='Activo' if stock > 0 else 'Inactivo'
+            status='Activo' if stock > 0 else 'activo'
         )
         
         # Añadir campos adicionales si existen en el modelo

@@ -24,6 +24,7 @@ def create_app():
     # 🔒 Cargar configuración desde la clase Config (que usa variables de entorno)
     app.config.from_object(Config)
     
+    
     # Inicializar extensiones con la app
     db.init_app(app)
     login_manager.init_app(app)
@@ -105,6 +106,7 @@ def create_app():
                              has_next=pagination.has_next,
                              has_prev=pagination.has_prev)
     
+    # ✅ VERIFICAR QUE products_bp ESTÉ REGISTRADO SIN url_prefix
     # Registrar blueprints
     from app.routes.auth import bp as auth_bp
     from app.routes.users_route import bp as users_bp
@@ -117,7 +119,11 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(products_bp)
+    
+    # ✅ PUNTO 2 CRÍTICO: Asegurar que products_bp esté registrado SIN url_prefix
+    # Esto permite que la ruta '/' en products.py funcione correctamente
+    app.register_blueprint(products_bp)  # SIN url_prefix - para que maneje '/'
+    
     app.register_blueprint(pedidos_bp)
     #app.register_blueprint(cart_bp)
     app.register_blueprint(reportes_bp)
